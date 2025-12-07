@@ -47,35 +47,62 @@ jobs:
 
           sha256sum release/artifact.tar.gz | awk '{print $1 "  artifact.tar.gz"}' > release/artifact.tar.gz.sha256
 
-      - name: Copy artifact to server
+      - name: Copy artifact to server (using SSH key)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
         run: |
-          echo "${{ secrets.DEPLOY_PORT }}"
-          scp -P "${{ secrets.DEPLOY_PORT }}" \
-            -o StrictHostKeyChecking=no \
-            release/artifact.tar.gz \
-            release/artifact.tar.gz.sha256 \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/"
+          set -euo pipefail
 
-      - name: Deploy and restart service
+          mkdir -p ~/.ssh
+          printf '%s\n' "${DEPLOY_SSH_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh-keyscan -p "${DEPLOY_PORT}" "${DEPLOY_HOST}" >> ~/.ssh/known_hosts || true
+          chmod 644 ~/.ssh/known_hosts
+
+          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -o ConnectTimeout=10 "${DEPLOY_USER}@${DEPLOY_HOST}" "echo auth-ok" || true
+
+          # copy artifacts using the key
+          scp -i ~/.ssh/deploy_key -P "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes \
+            release/artifact.tar.gz release/artifact.tar.gz.sha256 \
+            "${DEPLOY_USER}@${DEPLOY_HOST}:/tmp/"
+
+      - name: Deploy and restart service (using SSH key)
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          TMUX_SESSION: ${{ secrets.TMUX_SESSION }}
         run: |
-          ssh -p "${{ secrets.DEPLOY_PORT }}" \
-            -o StrictHostKeyChecking=no \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'EOF'
+          set -euo pipefail
+
+          if [ ! -f ~/.ssh/deploy_key ]; then
+            echo "SSH key not found at ~/.ssh/deploy_key"; exit 1
+          fi
+          chmod 600 ~/.ssh/deploy_key
+
+          ssh -i ~/.ssh/deploy_key -p "${DEPLOY_PORT}" -o StrictHostKeyChecking=yes \
+            "${DEPLOY_USER}@${DEPLOY_HOST}" <<EOF
               set -e
 
               cd /tmp
 
               sha256sum -c artifact.tar.gz.sha256 || { echo "checksum mismatch"; exit 1; }
 
-              tar -xzf artifact.tar.gz -C "${{ secrets.DEPLOY_PATH }}"
+              tar -xzf artifact.tar.gz -C "${DEPLOY_PATH}"
               rm -f artifact.tar.gz artifact.tar.gz.sha256
 
-              cd "${{ secrets.DEPLOY_PATH }}"
+              cd "${DEPLOY_PATH}"
 
-              if tmux has-session -t "${{ secrets.TMUX_SESSION }}" 2>/dev/null; then
-                tmux kill-session -t "${{ secrets.TMUX_SESSION }}" || true
+              if tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
+                tmux kill-session -t "${TMUX_SESSION}" || true
               fi
 
-              tmux new-session -d -s "${{ secrets.TMUX_SESSION }}" "bun ./dist/index.js"
-          EOF
+              tmux new-session -d -s "${TMUX_SESSION}" "bun ./dist/index.js"
+      EOF
 
