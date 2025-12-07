@@ -105,6 +105,6 @@ jobs:
               cd "${DEPLOY_PATH}"
 
               tmux kill-session -t "${TMUX_SESSION}" 2>/dev/null || true
-              tmux new-session -d -s "${TMUX_SESSION}" "cd '${DEPLOY_PATH}' && exec bun ./dist/index.js" || true
+              tmux new-session -d -s "${TMUX_SESSION}" "cd '${DEPLOY_PATH}' && exec bun ./dist/index.js & sleep 2; wait" || true
           EOF
 
