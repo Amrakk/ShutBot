@@ -103,13 +103,6 @@ jobs:
               rm -f artifact.tar.gz artifact.tar.gz.sha256
 
               cd "${DEPLOY_PATH}"
-
-              tmux kill-session -t "${TMUX_SESSION}" 2>/dev/null || true
-              tmux new-session -d -s "${{ secrets.TMUX_SESSION }}" \
-                "cd '${{ secrets.DEPLOY_PATH }}' && bun ./dist/index.js && sleep 100"
-
-              tmux ls
-
-              sleep 1
+              bun ./dist/index.js
           EOF
 
