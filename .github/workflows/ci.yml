@@ -1,4 +1,5 @@
 name: CI
+environment: Production
 
 on:
   push:
@@ -45,26 +46,6 @@ jobs:
           tar -C release-staging -czf release/artifact.tar.gz .
 
           sha256sum release/artifact.tar.gz | awk '{print $1 "  artifact.tar.gz"}' > release/artifact.tar.gz.sha256
-
-      - name: Validate deploy secrets (safe)
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: |
-          set -euo pipefail
-          # Presence checks (no secret values printed)
-          for v in DEPLOY_HOST DEPLOY_PORT DEPLOY_USER; do
-            if [ -z "${!v:-}" ]; then
-              echo "$v is MISSING"
-              exit 1
-            else
-              echo "$v present"
-            fi
-          done
-
-          # Optional: print the length of DEPLOY_PORT to further confirm substitution (value still not revealed)
-          printf 'DEPLOY_PORT length: %d\n' "$(printf '%s' "${DEPLOY_PORT}" | wc -c)"
 
       - name: Copy artifact to server
         run: |
