@@ -94,6 +94,11 @@ jobs:
 
               sha256sum -c artifact.tar.gz.sha256 || { echo "checksum mismatch"; exit 1; }
 
+              if [ ! -d "${DEPLOY_PATH}" ]; then
+                echo "Deploy path ${DEPLOY_PATH} does not exist — creating"
+                mkdir -p "${DEPLOY_PATH}" || { echo "Failed to create ${DEPLOY_PATH}"; exit 1; }
+              fi
+
               tar -xzf artifact.tar.gz -C "${DEPLOY_PATH}"
               rm -f artifact.tar.gz artifact.tar.gz.sha256
 
