@@ -105,16 +105,11 @@ jobs:
               cd "${DEPLOY_PATH}"
 
               tmux new-session -d -s "${TMUX_SESSION}" \
-                "cd '${DEPLOY_PATH}' && exec bun ./dist/index.js > '${DEPLOY_PATH}/logs/out.log' 2> '${DEPLOY_PATH}/logs/err.log'"
+                "cd '${DEPLOY_PATH}' && exec bun ./dist/index.js"
 
-              # short wait and status checks
               sleep 1
               if tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
                 echo "tmux session ${TMUX_SESSION} started"
-                echo "tail last 50 lines of stdout:"
-                tail -n 50 "${DEPLOY_PATH}/logs/out.log" || true
-                echo "tail last 50 lines of stderr:"
-                tail -n 50 "${DEPLOY_PATH}/logs/err.log" || true
               else
                 echo "tmux session failed to start; inspect logs above or run 'tmux ls' on host"; exit 1
               fi
