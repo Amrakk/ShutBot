@@ -106,7 +106,7 @@ jobs:
 
               tmux kill-session -t "${TMUX_SESSION}" 2>/dev/null || true
               tmux new-session -d -s "${{ secrets.TMUX_SESSION }}" \
-                "cd '${{ secrets.DEPLOY_PATH}}' && ( /usr/bin/env bun ./dist/index.js >/dev/null 2>&1 || true ); exec sleep 86400" || true
+                "cd '${{ secrets.DEPLOY_PATH}}' && ( bun ./dist/index.js >/dev/null 2>&1 || true ); exec sleep 30" || true
 
               sleep 1
           EOF
