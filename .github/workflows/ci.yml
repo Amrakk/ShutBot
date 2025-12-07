@@ -102,6 +102,13 @@ jobs:
               tar -xzf artifact.tar.gz -C "${DEPLOY_PATH}"
               rm -f artifact.tar.gz artifact.tar.gz.sha256
 
+              echo "REMOTE USER: $(whoami)"
+              echo "REMOTE PATH: $PATH"
+              command -v bun || echo "bun not in non-interactive PATH"
+              command -v node || echo "node not in non-interactive PATH"
+
+              bash -lc 'echo LOGIN PATH: $PATH; command -v bun; command -v node'
+
               cd "${DEPLOY_PATH}"
               node ./dist/index.js
           EOF
