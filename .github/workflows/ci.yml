@@ -105,7 +105,7 @@ jobs:
               cd "${DEPLOY_PATH}"
 
               tmux new-session -d -s "${TMUX_SESSION}" \
-                "cd '${DEPLOY_PATH}' && exec '${BUN_BIN}' ./dist/index.js > '${DEPLOY_PATH}/logs/out.log' 2> '${DEPLOY_PATH}/logs/err.log'"
+                "cd '${DEPLOY_PATH}' && exec bun ./dist/index.js > '${DEPLOY_PATH}/logs/out.log' 2> '${DEPLOY_PATH}/logs/err.log'"
 
               # short wait and status checks
               sleep 1
