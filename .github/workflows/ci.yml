@@ -46,6 +46,15 @@ jobs:
 
           sha256sum release/artifact.tar.gz | awk '{print $1 "  artifact.tar.gz"}' > release/artifact.tar.gz.sha256
 
+      - name: Check secrets presence
+        run: |
+          if [ -z "${{ secrets.DEPLOY_PORT }}" ]; then
+            echo "DEPLOY_PORT is empty"
+            exit 1
+          else
+            echo "DEPLOY_PORT is present"
+          fi
+
       - name: Copy artifact to server
         run: |
           echo "${{ secrets.DEPLOY_PORT }}"
