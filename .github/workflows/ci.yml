@@ -48,6 +48,7 @@ jobs:
 
       - name: Copy artifact to server
         run: |
+          echo "${{ secrets.DEPLOY_PORT }}"
           scp -P "${{ secrets.DEPLOY_PORT }}" \
             -o StrictHostKeyChecking=no \
             release/artifact.tar.gz \
