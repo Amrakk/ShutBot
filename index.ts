@@ -2,7 +2,7 @@ import { Client, GatewayIntentBits, Events, ChannelType, } from "discord.js";
 import { getShutQuote } from "./ai.ts";
 
 const botToken = process.env.BOT_TOKEN;
-const shutRate = parseInt(`${process.env.SHUT_RATE}`) || 1;
+const shutRate = parseFloat(`${process.env.SHUT_RATE}`) || 1;
 if (!botToken) throw new Error("Token not found");
 
 const client = new Client({
