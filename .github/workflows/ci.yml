@@ -25,7 +25,7 @@ jobs:
         run: bun run build
 
 
-      - name: Create artifact tar (includes .env from secret)
+      - name: Create artifact tar
         env:
           DEPLOY_ENV: ${{ secrets.DEPLOY_ENV }}
         run: |
@@ -36,7 +36,6 @@ jobs:
 
           cp -a dist release-staging/
           cp package.json release-staging/ || true
-          cp package-lock.json release-staging/ || true
           cp bun.lockb release-staging/ 2>/dev/null || true
 
           if [ -n "${DEPLOY_ENV:-}" ]; then
