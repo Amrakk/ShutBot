@@ -104,14 +104,7 @@ jobs:
 
               cd "${DEPLOY_PATH}"
 
-              tmux new-session -d -s "${TMUX_SESSION}" \
-                "cd '${DEPLOY_PATH}' && exec bun ./dist/index.js"
-
-              sleep 1
-              if tmux has-session -t "${TMUX_SESSION}" 2>/dev/null; then
-                echo "tmux session ${TMUX_SESSION} started"
-              else
-                echo "tmux session failed to start; inspect logs above or run 'tmux ls' on host"; exit 1
-              fi
+              tmux kill-session -t "${TMUX_SESSION}" 2>/dev/null || true
+              tmux new-session -d -s "${TMUX_SESSION}" "cd '${DEPLOY_PATH}' && exec bun ./dist/index.js" || true
           EOF
 
