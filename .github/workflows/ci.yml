@@ -102,7 +102,6 @@ jobs:
               tar -xzf artifact.tar.gz -C "${DEPLOY_PATH}"
               rm -f artifact.tar.gz artifact.tar.gz.sha256
 
-              cd "${DEPLOY_PATH}"
-              bun ./dist/index.js
+              bash -lc 'cd "'"${DEPLOY_PATH}"'" && bun ./dist/index.js'
           EOF
 
