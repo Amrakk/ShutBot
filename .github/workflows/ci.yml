@@ -104,5 +104,5 @@ jobs:
               fi
 
               tmux new-session -d -s "${TMUX_SESSION}" "bun ./dist/index.js"
-      EOF
+          EOF
 
