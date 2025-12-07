@@ -36,7 +36,6 @@ jobs:
 
           cp -a dist release-staging/
           cp package.json release-staging/ || true
-          cp bun.lockb release-staging/ 2>/dev/null || true
 
           if [ -n "${DEPLOY_ENV:-}" ]; then
             printf '%s\n' "${DEPLOY_ENV}" > release-staging/.env
@@ -48,31 +47,33 @@ jobs:
           sha256sum release/artifact.tar.gz | awk '{print $1 "  artifact.tar.gz"}' > release/artifact.tar.gz.sha256
 
       - name: Copy artifact to server
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          port: ${{ secrets.DEPLOY_PORT }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          source: "release/artifact.tar.gz,release/artifact.tar.gz.sha256"
-          target: "/tmp"
+        run: |
+          scp -P "${{ secrets.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            release/artifact.tar.gz \
+            release/artifact.tar.gz.sha256 \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/tmp/"
 
-      - name: Run
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          port: ${{ secrets.DEPLOY_PORT }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          script: |
-            cd /tmp
-            sha256sum -c artifact.tar.gz.sha256 || { echo "checksum mismatch"; exit 1; }
-            tar -xzf artifact.tar.gz -C ${{ secrets.DEPLOY_PATH }}
-            rm -f artifact.tar.gz artifact.tar.gz.sha256
+      - name: Deploy and restart service
+        run: |
+          ssh -p "${{ secrets.DEPLOY_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" << 'EOF'
+              set -e
 
-            cd ${{ secrets.DEPLOY_PATH }}
-            if tmux has-session -t "${{ secrets.TMUX_SESSION }}" 2>/dev/null; then
-              tmux kill-session -t "${{ secrets.TMUX_SESSION }}" || true
-            fi
-            tmux new-session -d -s "${{ secrets.TMUX_SESSION }}" "bun ./dist/index.js"
+              cd /tmp
+
+              sha256sum -c artifact.tar.gz.sha256 || { echo "checksum mismatch"; exit 1; }
+
+              tar -xzf artifact.tar.gz -C "${{ secrets.DEPLOY_PATH }}"
+              rm -f artifact.tar.gz artifact.tar.gz.sha256
+
+              cd "${{ secrets.DEPLOY_PATH }}"
+
+              if tmux has-session -t "${{ secrets.TMUX_SESSION }}" 2>/dev/null; then
+                tmux kill-session -t "${{ secrets.TMUX_SESSION }}" || true
+              fi
+
+              tmux new-session -d -s "${{ secrets.TMUX_SESSION }}" "bun ./dist/index.js"
+          EOF
 
