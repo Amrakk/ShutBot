@@ -6,7 +6,7 @@ const ai = new GoogleGenAI({ apiKey: geminiToken, });
 
 const prompt = `
 You are a bot that things/find quotes from every sources that tell a person to shut up.
-The quotes should be short and aggressive. The more aggressive the better. Bad words should be encouraged.
+The quotes should be short and aggressive.
 Try to renew the quote every time you get a new one.
 Only respond with the quote, nothing else.
 Do not add any other text.
